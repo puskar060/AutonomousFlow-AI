@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+from datetime import datetime
 from supabase import create_client, Client
 
 st.set_page_config(page_title="Enterprise & Store Hub", layout="wide")
@@ -15,7 +16,7 @@ supabase: Client = init_supabase()
 
 # Sidebar Navigation for Multiple Modules
 st.sidebar.title("🚀 Navigation Hub")
-app_mode = st.sidebar.selectbox("Choose App Module", ["🤖 AutonomousFlow AI", "🏪 Store Staff Activity Tracker"])
+app_mode = st.sidebar.selectbox("Choose App Module", ["🤖 AutonomousFlow AI", "⏱️ Store Time-by-Time Shift Tracker"])
 
 if app_mode == "🤖 AutonomousFlow AI":
     st.markdown("## 🤖 AutonomousFlow AI")
@@ -57,25 +58,53 @@ if app_mode == "🤖 AutonomousFlow AI":
         st.subheader("Task Status")
         st.dataframe({"Task": ["Stock Check", "Dispatch"], "Status": ["Completed", "Pending"]})
 
-elif app_mode == "🏪 Store Staff Activity Tracker":
-    st.markdown("## 🏪 Store Multi-Role & Staff Activity Tracker")
-    st.markdown("Track different staff roles and activities dynamically in Supabase.")
+elif app_mode == "⏱️ Store Time-by-Time Shift Tracker":
+    st.markdown("## ⏱️ Real-Time Staff Shift & Activity Timeline")
+    st.markdown("Track what staff members do step-by-step and time-by-time in Supabase.")
 
     staff_name = st.text_input("Staff Name", value="Puskar")
+    session_id_store = st.text_input("Shift / Session ID", value="shift_2026_11_08")
     role_position = st.selectbox("Select Post / Role", ["Cashier", "Kitchen Staff", "Inventory Manager", "Dispatcher"])
 
-    session_id_store = st.text_input("Store Session ID", value="store_session_01")
+    # Time-by-time Action choices
+    action_item = st.selectbox(
+        "Select Action / Task", 
+        [
+            "Clock In (Shift Started)", 
+            "Started Cashier Duty", 
+            "Restocking Items", 
+            "Handling Customer Complaint", 
+            "Took a Break", 
+            "Clock Out (Shift Ended)"
+        ]
+    )
 
-    if st.button("Record Staff Activity"):
-        data = {
+    if st.button("Log Action with Current Time"):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        log_data = {
             "session_id": session_id_store,
             "staff_name": staff_name,
             "role_position": role_position,
-            "task_performed": f"Handled tasks as {role_position}",
-            "status": "Completed"
+            "action_item": action_item
         }
+        
         try:
-            supabase.table("staff_activity").insert(data).execute()
-            st.success(f"Activity for {staff_name} ({role_position}) saved to Supabase successfully!")
+            supabase.table("staff_time_logs").insert(log_data).execute()
+            st.success(f"✅ Logged successfully at {current_time}: [{role_position}] {action_item} by {staff_name}")
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Database Error: {e}")
+
+    # Live Preview of Logs from Supabase
+    st.markdown("---")
+    st.subheader("📋 Live Shift Timeline History")
+
+    try:
+        response = supabase.table("staff_time_logs").select("*").eq("session_id", session_id_store).order("id", desc=True).execute()
+        data = response.data
+        if data:
+            st.dataframe(data)
+        else:
+            st.info("No logs found for this session yet. Start logging actions above!")
+    except Exception as e:
+        st.warning("Could not fetch live logs yet.")
