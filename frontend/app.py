@@ -1,8 +1,11 @@
 import streamlit as st
 import time
 
-st.set_page_config(page_title="OmniWorker AI", layout="wide")
-st.title("🤖 AutonomousFlow AI: Multi-Agent Enterprise Control Center")
+st.set_page_config(page_title="AutonomousFlow AI", layout="wide")
+
+# Clean Header Presentation
+st.markdown("## 🤖 AutonomousFlow AI")
+st.markdown("### Enterprise Multi-Agent Control Center")
 st.markdown("Real-time autonomous coordination engine powered by LangGraph & Supabase.")
 
 session_id = st.sidebar.text_input("Session ID", value="sess_99812")
